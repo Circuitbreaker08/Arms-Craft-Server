@@ -1,16 +1,17 @@
 import socketio
-import eventlet
-import threading
+import uvicorn
+import os
 
-sio = socketio.Server(logger=False, async_mode='eventlet', cors_allowed_origins="*")
-app = socketio.WSGIApp(sio)
+sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=["*"], logger=True)
+sio.instrument(auth=
+    {
+    'username': 'admin',
+    'password': os.environ['ADMIN_PASSWORD'],
+})
+app = socketio.ASGIApp(sio)
 
 @sio.event
-def connect(sid, environ, auth):
-    #print(sid)
-    pass
+async def connect(sid, auth, environ):
+    print(sid)
 
-def server():
-    eventlet.wsgi.server(eventlet.listen(("", 2700)), app)
-
-threading.Thread(target=server).start()
+uvicorn.run(app, host="0.0.0.0", port=2700)
