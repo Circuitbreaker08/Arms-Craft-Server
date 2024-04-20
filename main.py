@@ -1,17 +1,20 @@
+from aiohttp import web
 import socketio
-import uvicorn
-import os
 
-sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins=["*"], logger=True)
-sio.instrument(auth=
-    {
-    'username': 'admin',
-    'password': os.environ['ADMIN_PASSWORD'],
-})
-app = socketio.ASGIApp(sio)
+sio = socketio.AsyncServer(async_mode="aiohttp", cors_allowed_origins='*')
+app = web.Application()
+sio.attach(app)
+
+async def manager():
+    pass
 
 @sio.event
 async def connect(sid, auth, environ):
     print(sid)
 
-uvicorn.run(app, host="0.0.0.0", port=2700)
+async def init_app():
+    sio.start_background_task(manager)
+    return app
+
+if __name__ == '__main__':
+    web.run_app(init_app(), port=2700)
